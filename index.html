@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PiedraEats - Delivery en Piedralaves</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .smooth-transition { transition: all 0.3s ease; }
+        .pizza-card:active { transform: scale(0.95); }
+        #map-icon { transition: all 1s linear; } /* Tracking fluido */
+        .hidden { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+
+    <div id="app" class="max-w-md mx-auto bg-white min-h-screen shadow-xl relative pb-20">
+        
+        <header class="p-4 bg-orange-600 text-white sticky top-0 z-50 shadow-md">
+            <h1 class="text-xl font-bold flex items-center">
+                <i class="fas fa-pizza-slice mr-2"></i> PiedraEats
+            </h1>
+            <p class="text-xs opacity-90"><i class="fas fa-map-marker-alt"></i> Piedralaves, Ávila</p>
+        </header>
+
+        <section id="discovery-screen" class="p-4">
+            <div class="bg-orange-100 p-4 rounded-xl mb-6 border-l-4 border-orange-500">
+                <p class="text-orange-800 font-bold">PROMO DE VERANO ☀️</p>
+                <p class="text-sm text-orange-700">Usa el código <span class="bg-orange-500 text-white px-1 rounded">VERANO15</span> para un 15% dto.</p>
+            </div>
+
+            <div class="flex space-x-2 overflow-x-auto mb-6 pb-2">
+                <button class="bg-orange-500 text-white px-4 py-2 rounded-full text-sm">Pizzas</button>
+                <button class="bg-gray-200 px-4 py-2 rounded-full text-sm">Burgers</button>
+                <button class="bg-gray-200 px-4 py-2 rounded-full text-sm">Bebidas</button>
+            </div>
+
+            <h2 class="font-bold text-lg mb-4">Nuestras Pizzas</h2>
+            <div class="grid grid-cols-1 gap-4">
+                <div onclick="openCustomizer('Pizza Barbacoa', 14.50)" class="pizza-card flex bg-white border rounded-lg overflow-hidden shadow-sm cursor-pointer">
+                    <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=150&q=80" class="w-24 h-24 object-cover">
+                    <div class="p-3">
+                        <h3 class="font-bold">Pizza Barbacoa</h3>
+                        <p class="text-sm text-gray-500">14,50€</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="checkout-screen" class="p-4 hidden">
+            <button onclick="showScreen('discovery-screen')" class="mb-4 text-orange-600 font-bold"><i class="fas fa-arrow-left"></i> Volver</button>
+            <h2 class="text-2xl font-bold mb-4">Tu Pedido</h2>
+            
+            <div id="cart-items" class="mb-4 border-b pb-4">
+                </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium mb-1">Código de Descuento</label>
+                <div class="flex space-x-2">
+                    <input type="text" id="coupon-input" class="border rounded px-3 py-2 w-full" placeholder="Ej: VERANO15">
+                    <button onclick="applyCoupon()" class="bg-black text-white px-4 py-2 rounded font-bold">Aplicar</button>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-4 rounded-lg mb-4 text-sm">
+                <div class="flex justify-between mb-1"><span>Subtotal</span><span id="subtotal-val">0.00€</span></div>
+                <div id="discount-row" class="flex justify-between mb-1 text-green-600 hidden"><span>Descuento</span><span id="discount-val">0.00€</span></div>
+                <div class="flex justify-between font-bold text-lg border-t pt-2 mt-2"><span>Total</span><span id="total-val">0.00€</span></div>
+            </div>
+
+            <h3 class="font-bold mb-2">Método de Pago</h3>
+            <div class="grid grid-cols-2 gap-2 mb-6">
+                <button onclick="setPayment('Efectivo')" class="border p-3 rounded-lg flex flex-col items-center hover:border-orange-500"><i class="fas fa-money-bill"></i> <span class="text-xs">Efectivo</span></button>
+                <button onclick="setPayment('Tarjeta')" class="border p-3 rounded-lg flex flex-col items-center hover:border-orange-500"><i class="fas fa-credit-card"></i> <span class="text-xs">Tarjeta</span></button>
+                <button onclick="setPayment('Digital')" class="col-span-2 bg-blue-600 text-white p-3 rounded-lg flex justify-center items-center space-x-2">
+                    <i class="fab fa-apple-pay text-2xl"></i> <i class="fab fa-paypal text-xl"></i>
+                </button>
+            </div>
+
+            <button id="btn-order" onclick="processOrder()" class="w-full bg-orange-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg">Confirmar Pedido</button>
+        </section>
+
+        <section id="tracking-screen" class="p-4 hidden">
+            <h2 class="text-xl font-bold text-center mb-6">Sigue tu pedido</h2>
+            <div class="relative h-64 bg-gray-200 rounded-2xl overflow-hidden mb-6 border-2 border-gray-300">
+                <div class="absolute inset-0 bg-blue-50 opacity-50 bg-[url('https://www.google.com/maps/vt/pb=!1m4!1m3!1i14!2i8068!3i6104!2m3!1e0!2sm!3i420120488!3m8!2ses!3sUS!5e1105!12m4!1e68!2m2!1sset!2sRoadmap!4e0!5m1!1e0')]"></div>
+                <i id="map-icon" class="fas fa-motorcycle text-orange-600 text-2xl absolute" style="left: 10%; top: 80%;"></i>
+                <i class="fas fa-home text-blue-800 text-2xl absolute" style="right: 15%; top: 20%;"></i>
+            </div>
+            
+            <div class="space-y-4 text-center">
+                <div class="flex justify-between px-8 relative">
+                    <div class="z-10 bg-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs">1</div>
+                    <div class="z-10 bg-orange-600 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs">2</div>
+                    <div id="step-3" class="z-10 bg-gray-300 w-8 h-8 rounded-full flex items-center justify-center text-white text-xs">3</div>
+                </div>
+                <p id="tracking-status" class="font-bold text-orange-600 uppercase tracking-widest">En el horno 🔥</p>
+                <p class="text-sm text-gray-500">Repartidor: Juan (Llegada en 12 min)</p>
+            </div>
+        </section>
+
+        <nav class="fixed bottom-0 max-w-md w-full bg-white border-t flex justify-around p-3 text-gray-400">
+            <button onclick="showScreen('discovery-screen')" class="flex flex-col items-center text-orange-600"><i class="fas fa-home"></i><span class="text-[10px]">Inicio</span></button>
+            <button onclick="alert('Historial próximamente')" class="flex flex-col items-center"><i class="fas fa-history"></i><span class="text-[10px]">Pedidos</span></button>
+            <button class="flex flex-col items-center"><i class="fas fa-user"></i><span class="text-[10px]">Perfil</span></button>
+        </nav>
+
+    </div>
+
+    <script>
+        let cart = [];
+        let discount = 0;
+        let subtotal = 0;
+
+        // 1. Lógica de Cambio de Pantalla
+        function showScreen(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            window.scrollTo(0,0);
+        }
+
+        // 2. Personalización y Carrito
+        function openCustomizer(name, price) {
+            cart = [{ name, price }];
+            updateCartUI();
+            showScreen('checkout-screen');
+        }
+
+        function updateCartUI() {
+            const container = document.getElementById('cart-items');
+            subtotal = cart.reduce((acc, item) => acc + item.price, 0);
+            container.innerHTML = cart.map(item => `
+                <div class="flex justify-between py-2 font-medium">
+                    <span>${item.name}</span>
+                    <span>${item.price.toFixed(2)}€</span>
+                </div>
+            `).join('');
+            calculateTotal();
+        }
+
+        // 3. Sistema de Cupones (Funcional)
+        function applyCoupon() {
+            const input = document.getElementById('coupon-input').value;
+            if (input.toUpperCase() === 'VERANO15') {
+                discount = subtotal * 0.15;
+                document.getElementById('discount-row').classList.remove('hidden');
+                alert("¡Código VERANO15 aplicado! -15%");
+            } else {
+                alert("Código no válido");
+                discount = 0;
+                document.getElementById('discount-row').classList.add('hidden');
+            }
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            const delivery = 2.50;
+            const finalTotal = subtotal + delivery - discount;
+            document.getElementById('subtotal-val').innerText = `${subtotal.toFixed(2)}€`;
+            document.getElementById('discount-val').innerText = `-${discount.toFixed(2)}€`;
+            document.getElementById('total-val').innerText = `${finalTotal.toFixed(2)}€`;
+        }
+
+        // 4. Geofencing y Procesamiento de Orden
+        function processOrder() {
+            // Simulamos comprobación de ubicación en Piedralaves (Geofencing)
+            const tiempoConduccion = 12; // Valor simulado
+            
+            if(tiempoConduccion > 20) {
+                alert("🔴 ERROR: Estás a más de 20 min de Piedralaves. El pedido no puede realizarse.");
+                return;
+            }
+
+            document.getElementById('btn-order').innerText = "Procesando...";
+            setTimeout(() => {
+                showScreen('tracking-screen');
+                startSmoothTracking();
+            }, 1500);
+        }
+
+        // 5. Tracking Fluido (Interpolación de posición)
+        function startSmoothTracking() {
+            const bike = document.getElementById('map-icon');
+            const status = document.getElementById('tracking-status');
+            const step3 = document.getElementById('step-3');
+
+            setTimeout(() => {
+                // Movimiento suave 1
+                bike.style.left = "40%";
+                bike.style.top = "50%";
+                status.innerText = "Moto en camino 🛵";
+                step3.classList.add('bg-orange-600');
+            }, 3000);
+
+            setTimeout(() => {
+                // Movimiento suave 2 (Llegada)
+                bike.style.left = "75%";
+                bike.style.top = "25%";
+                status.innerText = "¡En tu puerta! 🍕";
+            }, 8000);
+        }
+
+        function setPayment(method) {
+            alert("Método seleccionado: " + method);
+        }
+    </script>
+</body>
+</html>
