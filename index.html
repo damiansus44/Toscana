@@ -211,12 +211,20 @@
         let cameraCounter = 1;
 
         // Inicializar con 2 cámaras por defecto
-        window.onload = () => {
-            addCamera();
-            addCamera();
-            // Iniciar el reloj global
+                window.onload = () => {
+            // Define aquí tus cámaras reales
+            cameras = [
+                { id: 'cam1', name: 'Pista de Hielo - General' },
+                { id: 'cam2', name: 'Taquilla' },
+                { id: 'cam3', name: 'Entrega de Patines' },
+                { id: 'cam4', name: 'Exterior' }
+            ];
+            cameraCounter = 5; // El siguiente número después de tus cámaras
+            
+            renderGrid();
             setInterval(updateAllTimestamps, 1000);
         };
+
 
         function addCamera() {
             const newCam = {
